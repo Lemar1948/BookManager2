@@ -1,0 +1,5 @@
+#ignore all files in the /target directory
+target/
+
+#ignore all which ends with ~
+*~

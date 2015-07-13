@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<beans
+    xmlns="http://www.springframework.org/schema/beans"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:context="http://www.springframework.org/schema/context" 
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xmlns:security="http://www.springframework.org/schema/security"
+    xsi:schemaLocation="
+    	http://www.springframework.org/schema/mvc 
+    	http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-4.0.xsd
+        http://www.springframework.org/schema/tx 
+        http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+        http://www.springframework.org/schema/security
+		http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+    
+    <mvc:annotation-driven />
+    
+    <context:component-scan base-package="com.bard.controllers" />
+    <context:component-scan base-package="com.bard.DAO.impl" />
+    <context:component-scan base-package="com.bard" />
+    
+    <tx:annotation-driven transaction-manager="txManager" />
+    
+    <bean id="txManager" class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory" />
+    </bean>
+    
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="packagesToScan" value="com.bard.model" />
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQLDialect</prop>
+                <prop key="hibernate.show_sql">true</prop>
+            </props>
+        </property>
+    </bean>
+    
+    <context:property-placeholder location="classpath:application.properties" />
+    
+    <bean id="dataSource" class="org.apache.tomcat.jdbc.pool.DataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver" />
+        <property name ="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="url" value="${db.url}"/>
+        <property name="InitialSize" value="5" />
+        <property name="maxActive" value="10" />
+        <property name="maxIdle" value="5" />
+        <property name="minIdle" value="2" />
+    </bean>
+    
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+        <property name="prefix" value="/WEB-INF/" />
+        <property name="suffix" value=".jsp" />
+    </bean>
+    
+    <!-- START Spring Security -->
+    <security:http pattern="/css/**" security="none" />
+    <security:http pattern="/images/**" security="none" />
+    <security:http pattern="/js/**" security="none" />
+    
+    
+    <security:http auto-config="true" use-expressions="true">
+        <!-- <security:access-denied-handler error-page="/access_denied.jsp" /> -->
+        <security:form-login login-page="/login.jsp"
+            login-processing-url="/login" username-parameter="username"
+            password-parameter="password" default-target-url="/book/list.do"
+            always-use-default-target="true" authentication-failure-url="/login.jsp?error=invalidLoginPassword" />
+        
+        <security:intercept-url pattern="/book/list.do" access="isAuthenticated()" />
+        <security:intercept-url pattern="/book/add.do" access="hasRole('ADMIN')" />
+        <!-- <security:intercept-url pattern="/else.do" access="isAuthenticated()"/> -->
+        
+        <security:logout logout-url="/logout" />
+        <!-- <security:remember-me user-service-ref="serviceUser" key="_spring_security_remember_me" /> -->
+        
+    </security:http>
+    
+    <security:authentication-manager>
+        <security:authentication-provider user-service-ref="serviceUser">
+            <security:password-encoder ref="passwordHelper" />
+        </security:authentication-provider>
+    </security:authentication-manager>
+    
+    <!-- 
+    <bean id="roleVoter" class="org.springframework.security.access.vote.RoleVoter">
+        <property name="rolePrefix" value="" />
+    </bean>
+     -->
+    <!-- END Spring Security -->
+    
+    
+</beans>
